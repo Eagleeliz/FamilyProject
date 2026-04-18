@@ -17,21 +17,70 @@ export default function UserLayout() {
 
   return (
     <div className="min-h-screen flex flex-col">
-      <nav className="bg-white border-b border-border px-4 py-3 lg:py-4 lg:px-6 relative">
+      <nav className="bg-white border-b border-border px-4 py-3 lg:py-4 lg:px-6">
         <div className="max-w-7xl mx-auto flex items-center justify-between">
-          <div className="flex items-center gap-4 lg:gap-8">
+
+          {/* Left: Logo + Hamburger */}
+          <div className="flex items-center gap-3">
             <Link to="/dashboard" className="flex items-center gap-2">
               <div className="w-8 h-8 bg-primary rounded-lg flex items-center justify-center">
                 <svg className="w-5 h-5 text-white" fill="currentColor" viewBox="0 0 20 20">
                   <path d="M10 2C6 2 2 6 2 10c0 4 4 10 8 8 4-2 8-4 8-8 0-4-4-8-8-8z" />
                 </svg>
               </div>
-              <span className="font-semibold text-lg hidden sm:block">Lineage</span>
+              <span className="font-semibold text-lg">Lineage</span>
             </Link>
+          </div>
 
+          {/* Center: Desktop Nav */}
+          <div className="hidden lg:flex items-center gap-6">
+            {navLinks.map((link) => (
+              <Link
+                key={link.path}
+                to={link.path}
+                className={`text-sm font-medium transition-colors ${
+                  location.pathname === link.path
+                    ? 'text-primary'
+                    : 'text-gray-600 hover:text-gray-900'
+                }`}
+              >
+                {link.label}
+              </Link>
+            ))}
+            {user?.role === 'admin' && (
+              <Link
+                to="/admin"
+                className={`text-sm font-medium transition-colors ${
+                  location.pathname.startsWith('/admin')
+                    ? 'text-primary'
+                    : 'text-gray-600 hover:text-gray-900'
+                }`}
+              >
+                Admin
+              </Link>
+            )}
+          </div>
+
+          {/* Right: Notification + User + Logout + Hamburger */}
+          <div className="flex items-center gap-3">
+            <div className="hidden lg:flex items-center gap-3">
+              <NotificationBell />
+              <span className="text-sm text-gray-600 truncate max-w-[140px]">
+                {user?.firstName} {user?.lastName}
+              </span>
+              <button
+                onClick={logout}
+                className="text-sm text-gray-600 hover:text-gray-900 transition-colors"
+              >
+                Logout
+              </button>
+            </div>
+
+            {/* Hamburger (mobile only) */}
             <button
               className="lg:hidden p-2 text-gray-600"
               onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+              aria-label="Toggle menu"
             >
               <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 {mobileMenuOpen ? (
@@ -41,51 +90,55 @@ export default function UserLayout() {
                 )}
               </svg>
             </button>
-
-            <div className={`${mobileMenuOpen ? 'flex' : 'hidden'} lg:flex absolute lg:relative top-full lg:top-0 left-0 lg:left-auto flex-col lg:flex-row items-start lg:items-center gap-3 lg:gap-6 bg-white lg:bg-transparent py-4 lg:py-0 px-4 lg:px-0 border-b lg:border-b-0 border-border lg:border-none w-full lg:w-auto z-50`}>
-              {navLinks.map((link) => (
-                <Link
-                  key={link.path}
-                  to={link.path}
-                  className={`text-sm font-medium transition-colors ${
-                    location.pathname === link.path
-                      ? 'text-primary'
-                      : 'text-gray-600 hover:text-gray-900'
-                  }`}
-                  onClick={() => setMobileMenuOpen(false)}
-                >
-                  {link.label}
-                </Link>
-              ))}
-              {user?.role === 'admin' && (
-                <Link
-                  to="/admin"
-                  className={`text-sm font-medium transition-colors ${
-                    location.pathname.startsWith('/admin')
-                      ? 'text-primary'
-                      : 'text-gray-600 hover:text-gray-900'
-                  }`}
-                  onClick={() => setMobileMenuOpen(false)}
-                >
-                  Admin
-                </Link>
-              )}
-            </div>
-          </div>
-
-          <div className={`${mobileMenuOpen ? 'flex' : 'hidden'} lg:flex flex-col lg:flex-row items-start lg:items-center gap-3 lg:gap-4 py-4 lg:py-0 px-4 lg:px-0 w-full lg:w-auto z-50`}>
-            <NotificationBell />
-            <span className="text-sm text-gray-600 truncate max-w-[120px] lg:max-w-none">
-              {user?.firstName} {user?.lastName}
-            </span>
-            <button
-              onClick={logout}
-              className="text-sm text-gray-600 hover:text-gray-900 transition-colors"
-            >
-              Logout
-            </button>
           </div>
         </div>
+
+        {/* Mobile Dropdown Menu */}
+        {mobileMenuOpen && (
+          <div className="lg:hidden mt-3 pt-3 border-t border-border flex flex-col gap-3 pb-2">
+            {navLinks.map((link) => (
+              <Link
+                key={link.path}
+                to={link.path}
+                className={`text-sm font-medium transition-colors px-1 ${
+                  location.pathname === link.path
+                    ? 'text-primary'
+                    : 'text-gray-600 hover:text-gray-900'
+                }`}
+                onClick={() => setMobileMenuOpen(false)}
+              >
+                {link.label}
+              </Link>
+            ))}
+            {user?.role === 'admin' && (
+              <Link
+                to="/admin"
+                className={`text-sm font-medium transition-colors px-1 ${
+                  location.pathname.startsWith('/admin')
+                    ? 'text-primary'
+                    : 'text-gray-600 hover:text-gray-900'
+                }`}
+                onClick={() => setMobileMenuOpen(false)}
+              >
+                Admin
+              </Link>
+            )}
+            <div className="flex items-center justify-between pt-2 border-t border-border">
+              <div className="flex items-center gap-2">
+                <NotificationBell />
+                <span className="text-sm text-gray-600">
+                  {user?.firstName} {user?.lastName}
+                </span>
+              </div>
+              <button
+                onClick={() => { logout(); setMobileMenuOpen(false); }}
+                className="text-sm text-gray-600 hover:text-gray-900 transition-colors"
+              >
+                Logout
+              </button>
+            </div>
+          </div>
+        )}
       </nav>
 
       <main className="flex-1">

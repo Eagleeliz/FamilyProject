@@ -1,8 +1,9 @@
 import { useState, useEffect, useRef } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate } from 'react-router';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { notificationService } from '@/services/notification.service';
 import type { Notification } from '@/types';
+import JoinRequestModal from './JoinRequestModal';
 
 interface NotificationBellProps {
   onClose?: () => void;
@@ -10,7 +11,11 @@ interface NotificationBellProps {
 
 export default function NotificationBell({ onClose }: NotificationBellProps) {
   const [isOpen, setIsOpen] = useState(false);
+  const [showJoinModal, setShowJoinModal] = useState(false);
+  const [selectedNotification, setSelectedNotification] = useState<Notification | null>(null);
   const dropdownRef = useRef<HTMLDivElement>(null);
+  const buttonRef = useRef<HTMLButtonElement>(null);
+  const [dropdownTop, setDropdownTop] = useState(0);
   const navigate = useNavigate();
   const queryClient = useQueryClient();
 
@@ -38,9 +43,22 @@ export default function NotificationBell({ onClose }: NotificationBellProps) {
     },
   });
 
+  const handleOpen = () => {
+    if (buttonRef.current) {
+      const rect = buttonRef.current.getBoundingClientRect();
+      setDropdownTop(rect.bottom + 8);
+    }
+    setIsOpen(!isOpen);
+  };
+
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
-      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+      if (
+        dropdownRef.current &&
+        !dropdownRef.current.contains(event.target as Node) &&
+        buttonRef.current &&
+        !buttonRef.current.contains(event.target as Node)
+      ) {
         setIsOpen(false);
       }
     }
@@ -52,20 +70,70 @@ export default function NotificationBell({ onClose }: NotificationBellProps) {
     if (!notification.isRead) {
       markReadMutation.mutate(notification.id);
     }
-    if (onClose) onClose();
     setIsOpen(false);
 
     if (notification.type === 'join_request' && notification.relatedId) {
-      navigate(`/dashboard/family/${notification.relatedId}?tab=pending`);
+      setSelectedNotification(notification);
+      setShowJoinModal(true);
     } else if (notification.type === 'member_approved' && notification.relatedId) {
       navigate(`/dashboard/family/${notification.relatedId}`);
+      if (onClose) onClose();
+    } else {
+      if (onClose) onClose();
     }
   };
 
+  const NotificationList = ({ notifications }: { notifications: Notification[] }) => (
+    <div className="max-h-96 overflow-y-auto">
+      {notifications.length > 0 ? (
+        notifications.map((notification) => (
+          <div
+            key={notification.id}
+            onClick={() => handleNotificationClick(notification)}
+            className={`p-4 border-b border-gray-100 cursor-pointer hover:bg-gray-50 transition-colors ${
+              !notification.isRead ? 'bg-blue-50' : ''
+            }`}
+          >
+            <div className="flex items-start gap-3">
+              <div className={`w-2 h-2 rounded-full mt-2 flex-shrink-0 ${notification.isRead ? 'bg-gray-300' : 'bg-primary'}`} />
+              <div className="flex-1 min-w-0">
+                <p className="font-medium text-sm text-gray-800">{notification.title}</p>
+                <p className="text-sm text-gray-600 mt-1">{notification.message}</p>
+                {notification.type === 'join_request' && (
+                  <p className="text-xs text-primary mt-1 font-medium">Tap to accept or reject</p>
+                )}
+                <p className="text-xs text-gray-400 mt-2">
+                  {new Date(notification.createdAt).toLocaleDateString()}
+                </p>
+              </div>
+            </div>
+          </div>
+        ))
+      ) : (
+        <div className="p-8 text-center text-gray-500">No notifications yet</div>
+      )}
+    </div>
+  );
+
+  const DropdownHeader = () => (
+    <div className="flex items-center justify-between p-4 border-b border-gray-200">
+      <h3 className="font-semibold text-gray-800">Notifications</h3>
+      {unreadCount?.data !== undefined && unreadCount.data > 0 && (
+        <button
+          onClick={() => markAllReadMutation.mutate()}
+          className="text-sm text-primary hover:underline"
+        >
+          Mark all read
+        </button>
+      )}
+    </div>
+  );
+
   return (
-    <div className="relative" ref={dropdownRef}>
+    <div className="relative">
       <button
-        onClick={() => setIsOpen(!isOpen)}
+        ref={buttonRef}
+        onClick={handleOpen}
         className="relative p-2 text-gray-600 hover:bg-gray-100 rounded-lg transition-colors"
       >
         <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -79,48 +147,37 @@ export default function NotificationBell({ onClose }: NotificationBellProps) {
       </button>
 
       {isOpen && (
-        <div className="absolute right-0 mt-2 w-80 bg-white rounded-lg shadow-lg border border-gray-200 z-50">
-          <div className="flex items-center justify-between p-4 border-b border-gray-200">
-            <h3 className="font-semibold text-gray-800">Notifications</h3>
-            {unreadCount?.data !== undefined && unreadCount.data > 0 && (
-              <button
-                onClick={() => markAllReadMutation.mutate()}
-                className="text-sm text-primary hover:underline"
-              >
-                Mark all read
-              </button>
-            )}
+        <>
+          {/* Mobile */}
+          <div
+            ref={dropdownRef}
+            className="sm:hidden fixed left-4 right-4 z-50 bg-white rounded-lg shadow-lg border border-gray-200"
+            style={{ top: dropdownTop }}
+          >
+            <DropdownHeader />
+            <NotificationList notifications={notifications?.data ?? []} />
           </div>
 
-          <div className="max-h-96 overflow-y-auto">
-            {notifications?.data && notifications.data.length > 0 ? (
-              notifications.data.map((notification) => (
-                <div
-                  key={notification.id}
-                  onClick={() => handleNotificationClick(notification)}
-                  className={`p-4 border-b border-gray-100 cursor-pointer hover:bg-gray-50 transition-colors ${
-                    !notification.isRead ? 'bg-blue-50' : ''
-                  }`}
-                >
-                  <div className="flex items-start gap-3">
-                    <div className={`w-2 h-2 rounded-full mt-2 ${notification.isRead ? 'bg-gray-300' : 'bg-primary'}`} />
-                    <div className="flex-1">
-                      <p className="font-medium text-sm text-gray-800">{notification.title}</p>
-                      <p className="text-sm text-gray-600 mt-1">{notification.message}</p>
-                      <p className="text-xs text-gray-400 mt-2">
-                        {new Date(notification.createdAt).toLocaleDateString()}
-                      </p>
-                    </div>
-                  </div>
-                </div>
-              ))
-            ) : (
-              <div className="p-8 text-center text-gray-500">
-                No notifications yet
-              </div>
-            )}
+          {/* Desktop */}
+          <div className="hidden sm:block absolute right-0 mt-2 w-80 z-50 bg-white rounded-lg shadow-lg border border-gray-200">
+            <DropdownHeader />
+            <NotificationList notifications={notifications?.data ?? []} />
           </div>
-        </div>
+        </>
+      )}
+
+      {showJoinModal && selectedNotification && (
+        <JoinRequestModal
+          isOpen={showJoinModal}
+          onClose={() => {
+            setShowJoinModal(false);
+            setSelectedNotification(null);
+            if (onClose) onClose();
+          }}
+          familyId={selectedNotification.relatedId!}
+          userId={selectedNotification.userId}
+          userName={selectedNotification.message?.split(' ').slice(0, 2).join(' ')}
+        />
       )}
     </div>
   );

@@ -26,11 +26,15 @@ export const useAuthStore = create<AuthState>()(
       login: async (email: string, password: string) => {
         const response = await authService.login({ email, password });
         if (response.success && response.data) {
-          set({
-            user: response.data.user,
-            token: response.data.tokens.accessToken,
-            isAuthenticated: true,
-          });
+          const token = response.data.tokens.accessToken;
+          set({ token, isAuthenticated: true });
+          const userResponse = await authService.getMe();
+          if (userResponse.success && userResponse.data) {
+            set({ user: userResponse.data });
+          } else {
+            set({ user: null, token: null, isAuthenticated: false });
+            throw new Error(userResponse.error || 'Failed to fetch user data');
+          }
         } else {
           throw new Error(response.error || 'Login failed');
         }
@@ -39,11 +43,15 @@ export const useAuthStore = create<AuthState>()(
       register: async (email: string, password: string, firstName: string, lastName: string) => {
         const response = await authService.register({ email, password, firstName, lastName });
         if (response.success && response.data) {
-          set({
-            user: response.data.user,
-            token: response.data.tokens.accessToken,
-            isAuthenticated: true,
-          });
+          const token = response.data.tokens.accessToken;
+          set({ token, isAuthenticated: true });
+          const userResponse = await authService.getMe();
+          if (userResponse.success && userResponse.data) {
+            set({ user: userResponse.data });
+          } else {
+            set({ user: null, token: null, isAuthenticated: false });
+            throw new Error(userResponse.error || 'Failed to fetch user data');
+          }
         } else {
           throw new Error(response.error || 'Registration failed');
         }
@@ -59,6 +67,7 @@ export const useAuthStore = create<AuthState>()(
 
       checkAuth: async () => {
         const token = useAuthStore.getState().token;
+        set({ isLoading: true });
         if (!token) {
           set({ isLoading: false });
           return;
