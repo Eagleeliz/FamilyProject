@@ -140,7 +140,10 @@ export class AuthService {
   }
 
   private generateTokens(payload: JwtPayload): TokenPair {
-    const accessToken = jwt.sign(payload, config.jwtSecret, { expiresIn: config.jwtExpiresIn });
+    const accessToken = jwt.sign(payload, config.jwtSecret, { 
+  expiresIn: config.jwtExpiresIn as any
+});
+
     return { accessToken, expiresIn: config.jwtExpiresIn };
   }
 

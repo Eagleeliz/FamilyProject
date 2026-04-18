@@ -203,7 +203,7 @@ export class RelationshipService {
     }
 
     const uniqueCousins = cousins.filter((p, index, self) => 
-      index === self.findIndex((t) => t.id === p.id) && t.id !== personId
+      index === self.findIndex((t) => t.id === p.id) && p.id !== personId
     );
 
     return uniqueCousins;
