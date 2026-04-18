@@ -17,7 +17,7 @@ export default function UserLayout() {
 
   return (
     <div className="min-h-screen flex flex-col">
-      <nav className="bg-white border-b border-border px-4 py-4 lg:px-6">
+      <nav className="bg-white border-b border-border px-4 py-3 lg:py-4 lg:px-6 relative">
         <div className="max-w-7xl mx-auto flex items-center justify-between">
           <div className="flex items-center gap-4 lg:gap-8">
             <Link to="/dashboard" className="flex items-center gap-2">
@@ -42,7 +42,7 @@ export default function UserLayout() {
               </svg>
             </button>
 
-            <div className={`${mobileMenuOpen ? 'flex' : 'hidden'} lg:flex absolute lg:relative top-full lg:top-0 left-0 lg:left-auto flex-col lg:flex-row items-start lg:items-center gap-3 lg:gap-6 bg-white lg:bg-transparent p-4 lg:p-0 border-b lg:border-b-0 border-border lg:border-none w-full lg:w-auto`}>
+            <div className={`${mobileMenuOpen ? 'flex' : 'hidden'} lg:flex absolute lg:relative top-full lg:top-0 left-0 lg:left-auto flex-col lg:flex-row items-start lg:items-center gap-3 lg:gap-6 bg-white lg:bg-transparent py-4 lg:py-0 px-4 lg:px-0 border-b lg:border-b-0 border-border lg:border-none w-full lg:w-auto z-50`}>
               {navLinks.map((link) => (
                 <Link
                   key={link.path}
@@ -73,7 +73,7 @@ export default function UserLayout() {
             </div>
           </div>
 
-          <div className={`${mobileMenuOpen ? 'flex' : 'hidden'} lg:flex flex-col lg:flex-row items-start lg:items-center gap-3 lg:gap-4 p-4 lg:p-0 w-full lg:w-auto`}>
+          <div className={`${mobileMenuOpen ? 'flex' : 'hidden'} lg:flex flex-col lg:flex-row items-start lg:items-center gap-3 lg:gap-4 py-4 lg:py-0 px-4 lg:px-0 w-full lg:w-auto z-50`}>
             <NotificationBell />
             <span className="text-sm text-gray-600 truncate max-w-[120px] lg:max-w-none">
               {user?.firstName} {user?.lastName}
