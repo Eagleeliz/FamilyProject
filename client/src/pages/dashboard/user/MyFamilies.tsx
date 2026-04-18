@@ -64,10 +64,7 @@ export default function MyFamilies() {
     });
   };
 
-  const handleJoin = (e: React.FormEvent) => {
-    e.preventDefault();
-    joinMutation.mutate(joinFamilyId);
-  };
+ 
 
   return (
     <div className="max-w-7xl mx-auto px-6 py-12">
